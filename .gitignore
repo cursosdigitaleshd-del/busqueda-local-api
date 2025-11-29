@@ -1,5 +1,5 @@
-# Environment variables
-.env
+# Environment variables (local only)
+# .env (commented to allow production .env in repo)
 .env.local
 .env.production
 
