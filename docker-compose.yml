@@ -1,20 +1,16 @@
 services:
-  # API Principal
   api:
     build: .
-    container_name: busqueda-local-api
+    container_name: busqueda-api-v2
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "8001:8000"
     environment:
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-      - GOOGLE_SHEETS_NEGOCIOS_ID=${GOOGLE_SHEETS_NEGOCIOS_ID}
-      - GOOGLE_SHEETS_CLIENTES_ID=${GOOGLE_SHEETS_CLIENTES_ID}
-      - GOOGLE_CREDENTIALS_JSON=${GOOGLE_CREDENTIALS_JSON}
-      - REDIS_URL=redis://redis:6379
-    volumes:
-      - ./app:/app/app
-      - ./credentials:/app/credentials:ro
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      GOOGLE_SHEETS_NEGOCIOS_ID: ${GOOGLE_SHEETS_NEGOCIOS_ID}
+      GOOGLE_SHEETS_CLIENTES_ID: ${GOOGLE_SHEETS_CLIENTES_ID}
+      GOOGLE_CREDENTIALS_JSON: ${GOOGLE_CREDENTIALS_JSON}
+      REDIS_URL: redis://redis:6379
     depends_on:
       - redis
     networks:
@@ -26,13 +22,12 @@ services:
       retries: 3
       start_period: 40s
 
-  # Redis para sesiones
   redis:
     image: redis:7-alpine
-    container_name: busqueda-redis
+    container_name: busqueda-redis-v2
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "6380:6379"
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     volumes:
       - redis-data:/data
