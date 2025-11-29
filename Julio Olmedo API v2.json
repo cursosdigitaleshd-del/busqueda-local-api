@@ -1,0 +1,133 @@
+{
+  "name": "Julio Olmedo API v2",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [
+        176,
+        128
+      ],
+      "webhookId": "tu-webhook-id",
+      "id": "e2c1b46c-0543-4558-bda2-e78579f3a659",
+      "credentials": {
+        "telegramApi": {
+          "id": "I4OtmTMf61vhU5Xn",
+          "name": "Telegram Julio Olmedo PMV"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://5.161.231.225:8001/api/buscar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "mensaje",
+              "value": "={{ $json.message.text }}"
+            },
+            {
+              "name": "chat_id",
+              "value": "={{ String($json.message.chat.id) }}"
+            },
+            {
+              "name": "telefono",
+              "value": "={{ $json.message.from.phone_number || 'default' }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        384,
+        128
+      ],
+      "id": "5f013fa7-ab70-400b-ae8c-80bb5d675d66"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $('HTTP Request').item.json.mensaje }}",
+        "additionalFields": {}
+      },
+      "name": "Telegram Send",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        576,
+        128
+      ],
+      "id": "7da4f529-e66c-45c2-928c-ce3bf22b3f99",
+      "webhookId": "d155c528-b3f3-41c5-8337-4eaa1eb46a00",
+      "credentials": {
+        "telegramApi": {
+          "id": "I4OtmTMf61vhU5Xn",
+          "name": "Telegram Julio Olmedo PMV"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Telegram Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "89d967e4-84c4-4953-ad61-22e18df283e5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "33738330930e3881dd5571eca013f36ddf8aab20e4ea5c1f2ebaf4a2b4668ac6"
+  },
+  "id": "a6iFHiTu9MLTGWfc",
+  "tags": []
+}
