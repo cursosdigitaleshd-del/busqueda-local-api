@@ -1,0 +1,70 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Deploy to VPS
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USER }}
+        key: ${{ secrets.VPS_SSH_KEY }}
+        script: |
+          # Crear directorio si no existe
+          mkdir -p /opt/busqueda-local-api
+          
+          # Ir al directorio
+          cd /opt/busqueda-local-api
+          
+          # Si es primera vez, clonar
+          if [ ! -d ".git" ]; then
+            cd /opt
+            rm -rf busqueda-local-api
+            git clone https://github.com/${{ github.repository }}.git
+            cd busqueda-local-api
+          else
+            # Si ya existe, pull
+            git fetch origin
+            git reset --hard origin/main
+          fi
+          
+          # Crear .env con secrets
+          cat > .env << EOF
+          OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}
+          GOOGLE_SHEETS_NEGOCIOS_ID=${{ secrets.GOOGLE_SHEETS_NEGOCIOS_ID }}
+          GOOGLE_SHEETS_CLIENTES_ID=${{ secrets.GOOGLE_SHEETS_CLIENTES_ID }}
+          GOOGLE_CREDENTIALS_JSON='${{ secrets.GOOGLE_CREDENTIALS_JSON }}'
+          REDIS_URL=${{ secrets.REDIS_URL }}
+          EOF
+          
+          # Rebuild y restart
+          docker-compose build --no-cache
+          docker-compose up -d
+          
+          # Limpiar imágenes viejas
+          docker image prune -f
+          
+          # Health check
+          sleep 10
+          curl -f http://localhost:8000/health || exit 1
+          
+    - name: Verify deployment
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USER }}
+        key: ${{ secrets.VPS_SSH_KEY }}
+        script: |
+          cd /opt/busqueda-local-api
+          docker-compose ps
+          docker logs --tail 20 busqueda-local-api
