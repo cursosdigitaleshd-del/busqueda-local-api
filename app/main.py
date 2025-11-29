@@ -20,7 +20,7 @@ app.add_middleware(
 # Inicializar servicios
 sheets_service = GoogleSheetsService(
     spreadsheet_id_negocios=os.getenv("GOOGLE_SHEETS_NEGOCIOS_ID", ""),
-    spreadsheet_id_clientes=os.getenv("GOOGLE_SHEETS_CLIENTES_ID", "")
+    spreadsheet_id_clientes=""  # No se usa
 )
 
 ai_service = AIService(api_key=os.getenv("OPENROUTER_API_KEY", ""))
@@ -46,14 +46,15 @@ async def health():
 async def buscar(request: BusquedaRequest):
     """Endpoint principal de búsqueda"""
     try:
-        # 1. Validar cliente
-        cliente = await sheets_service.validar_cliente(request.telefono)
-        if not cliente:
-            return BusquedaResponse(
-                tipo="error",
-                mensaje="❌ Cliente no encontrado. Por favor contacta con soporte.",
-                total_encontrados=0
-            )
+        # 1. Cliente default (sin validación - servicio público)
+        from app.models.schemas import ValidacionCliente
+        cliente = ValidacionCliente(
+            telefono=request.telefono,
+            ciudad="ASUNCION",  # Ciudad por defecto
+            barrio="CENTRO",    # Barrio por defecto
+            plan="Plan 2",      # Plan 2 = búsqueda nacional
+            existe=True
+        )
         
         # 2. Verificar si hay sesión activa
         sesion = await session_service.obtener_sesion(request.chat_id)
