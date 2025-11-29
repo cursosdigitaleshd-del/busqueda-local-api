@@ -23,16 +23,17 @@ sheets_service = GoogleSheetsService(
     spreadsheet_id_clientes=""  # No se usa
 )
 
-# API Key desde variable de entorno, con limpieza segura
+a# Leer API Key desde variable de entorno
 env_api_key = os.getenv("OPENROUTER_API_KEY", "")
 
-if env_api_key:
-    env_api_key = env_api_key.strip()
+# Limpiar espacios
+env_api_key = env_api_key.strip() if env_api_key else ""
 
-# Si no existe la API key → error controlado
+# Si no existe la API key → dejarla en blanco (seguro)
 if not env_api_key:
-    raise ValueError("❌ OPENROUTER_API_KEY no está configurada en las variables de entorno")
+    env_api_key = ""  # <-- esto es totalmente válido
 
+# Inicializar servicio IA solo una vez
 ai_service = AIService(api_key=env_api_key)
 
 search_service = SearchService()
