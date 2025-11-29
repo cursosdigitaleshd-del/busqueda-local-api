@@ -71,19 +71,96 @@ async def buscar(request: BusquedaRequest):
         # 2. Verificar si hay sesión activa
         sesion = await session_service.obtener_sesion(request.chat_id)
         if sesion:
+            # 2.1 Verificar si el usuario quiere cancelar
+            mensaje_lower = request.mensaje.lower().strip()
+            if mensaje_lower in ['cancelar', 'cancel', 'salir', 'volver']:
+                await session_service.borrar_sesion(request.chat_id)
+                return BusquedaResponse(
+                    tipo="saludo",
+                    mensaje="✅ Selección cancelada. ¿Qué estás buscando?",
+                    total_encontrados=0
+                )
+            
+            # 2.2 Verificar si el mensaje es un número
+            try:
+                opcion_num = int(request.mensaje.strip())
+                if 1 <= opcion_num <= len(sesion['opciones']):
+                    # Procesar la selección
+                    keyword = sesion['opciones'][opcion_num - 1]
+                    negocios = await sheets_service.leer_negocios()
+                    
+                    resultados = search_service.buscar(
+                        keyword,
+                        negocios,
+                        sesion['ciudad'],
+                        sesion['barrio'],
+                        cliente.plan
+                    )
+                    
+                    # Borrar sesión después de procesar
+                    await session_service.borrar_sesion(request.chat_id)
+                    
+                    if not resultados:
+                        # Si no hay resultados, mostrar menú nuevamente
+                        opciones_menu = ["electricista", "plomero", "carpintero", "cerrajero", "mecanico"]
+                        await session_service.guardar_sesion(
+                            request.chat_id,
+                            opciones_menu,
+                            cliente.ciudad,
+                            cliente.barrio
+                        )
+                        
+                        mensaje = f"😔 No encontré resultados para '{keyword}'.\n\n🔧 ¿Qué estás buscando?\n\n"
+                        for i, opcion in enumerate(opciones_menu, 1):
+                            mensaje += f"{i}️⃣ {opcion.capitalize()}\n"
+                        mensaje += "\nResponde con el número o escribe 'cancelar' para volver."
+                        
+                        return BusquedaResponse(
+                            tipo="ambiguo",
+                            mensaje=mensaje,
+                            requiere_seleccion=True,
+                            opciones=opciones_menu
+                        )
+                    
+                    mensaje = f"🏪 Encontré {len(resultados)} resultados para *{keyword}*:\n\n"
+                    for i, neg in enumerate(resultados[:5], 1):
+                        nombre = neg.get('NOMBRE DEL NEGOCIO', 'Sin nombre')
+                        telefono = neg.get('TELEFONO', 'Sin teléfono')
+                        ciudad = neg.get('CIUDAD', '')
+                        barrio = neg.get('ZONA/BARRIO', '')
+                        mensaje += f"{i}️⃣ *{nombre}*\n📞 {telefono}\n📍 {barrio}, {ciudad}\n\n"
+                    
+                    return BusquedaResponse(
+                        tipo="resultados",
+                        mensaje=mensaje,
+                        resultados=resultados[:5],
+                        total_encontrados=len(resultados)
+                    )
+            except ValueError:
+                pass  # No es un número, continuar con mensaje de error
+            
+            # 2.3 Mensaje no válido durante selección
             return BusquedaResponse(
                 tipo="ambiguo",
-                mensaje=f"⏳ Tienes una selección pendiente. Por favor elige un número del 1 al {len(sesion['opciones'])}",
+                mensaje=f"⏳ Tienes una selección pendiente.\n\nElige un número del 1 al {len(sesion['opciones'])} o escribe 'cancelar' para volver.",
                 requiere_seleccion=True,
                 opciones=sesion['opciones']
             )
         
         # 3. Interpretar mensaje con IA
-        interpretacion = await ai_service.interpretar_mensaje(
-            request.mensaje,
-            cliente.ciudad,
-            cliente.barrio
-        )
+        try:
+            interpretacion = await ai_service.interpretar_mensaje(
+                request.mensaje,
+                cliente.ciudad,
+                cliente.barrio
+            )
+        except Exception as e:
+            print(f"⚠️ Error en IA, usando fallback: {e}")
+            # Si la IA falla completamente, mostrar menú
+            interpretacion = {
+                "tipo": "ambiguo",
+                "opciones": ["electricista", "plomero", "carpintero", "cerrajero", "mecanico"]
+            }
         
         # 4. Procesar según tipo
         if interpretacion['tipo'] == 'saludo':
@@ -105,7 +182,7 @@ async def buscar(request: BusquedaRequest):
             mensaje = "🔧 ¿Qué estás buscando?\n\n"
             for i, opcion in enumerate(opciones, 1):
                 mensaje += f"{i}️⃣ {opcion.capitalize()}\n"
-            mensaje += "\nResponde con el número de tu elección."
+            mensaje += "\nResponde con el número o escribe 'cancelar' para volver."
             
             return BusquedaResponse(
                 tipo="ambiguo",
@@ -127,10 +204,25 @@ async def buscar(request: BusquedaRequest):
             )
             
             if not resultados:
+                # Si no hay resultados, mostrar menú de opciones
+                opciones_menu = ["electricista", "plomero", "carpintero", "cerrajero", "mecanico"]
+                await session_service.guardar_sesion(
+                    request.chat_id,
+                    opciones_menu,
+                    cliente.ciudad,
+                    cliente.barrio
+                )
+                
+                mensaje = f"😔 No encontré resultados para '{keyword}'.\n\n🔧 ¿Qué estás buscando?\n\n"
+                for i, opcion in enumerate(opciones_menu, 1):
+                    mensaje += f"{i}️⃣ {opcion.capitalize()}\n"
+                mensaje += "\nResponde con el número o escribe 'cancelar' para volver."
+                
                 return BusquedaResponse(
-                    tipo="sin_resultados",
-                    mensaje=f"😔 No encontré resultados para '{keyword}' en tu zona.\n\nIntenta con otra búsqueda.",
-                    total_encontrados=0
+                    tipo="ambiguo",
+                    mensaje=mensaje,
+                    requiere_seleccion=True,
+                    opciones=opciones_menu
                 )
             
             mensaje = f"🏪 Encontré {len(resultados)} resultados:\n\n"
