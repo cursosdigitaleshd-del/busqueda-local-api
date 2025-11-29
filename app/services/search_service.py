@@ -56,11 +56,7 @@ class SearchService:
         # Ordenar por score
         resultados.sort(key=lambda x: x['score'], reverse=True)
         
-        # Fallback si pocos resultados
-        if len(resultados) < 3 and self.UMBRAL_SIMILITUD > self.UMBRAL_FALLBACK:
-            print(f"⚠️ Solo {len(resultados)} resultados, reintentando con umbral {self.UMBRAL_FALLBACK}%")
-            return self.buscar(keyword, negocios, ciudad, barrio, plan)
-        
+        # Devolver hasta 10 resultados (sin recursión)
         return [r['negocio'] for r in resultados[:10]]
 
     def _normalizar_texto(self, texto: str) -> str:
