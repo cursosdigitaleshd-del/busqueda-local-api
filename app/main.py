@@ -23,6 +23,10 @@ env_sheet_id = os.getenv("GOOGLE_SHEETS_NEGOCIOS_ID", "")
 SHEET_ID = env_sheet_id if env_sheet_id else "11V2aAAh9xhvEthUHaTx_Tnk4GfSyxdqt52jVUT4N92M"
 
 env_api_key = os.getenv("OPENROUTER_API_KEY", "")
+# Limpiar API Key de espacios y saltos de línea
+if env_api_key:
+    env_api_key = env_api_key.strip()
+
 # Nota: La API Key debe configurarse en EasyPanel. Si está vacía, la app usará fallback sin IA.
 API_KEY = env_api_key
 

@@ -1,18 +1,4 @@
 import httpx
-import json
-from typing import Dict, List, Optional
-
-class AIService:
-    def __init__(self, api_key: str):
-        self.api_key = api_key
-        self.api_url = "https://openrouter.ai/api/v1/chat/completions"
-        self.model = "meta-llama/llama-3.1-8b-instruct:free"
-
-    async def interpretar_mensaje(self, mensaje: str, ciudad: str, barrio: str) -> Dict:
-        """Interpreta el mensaje del usuario usando IA"""
-        try:
-            prompt = self._construir_prompt(mensaje, ciudad, barrio)
-            
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.post(
                     self.api_url,
