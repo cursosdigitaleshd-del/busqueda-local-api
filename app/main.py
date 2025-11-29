@@ -18,24 +18,24 @@ app.add_middleware(
 )
 
 # Inicializar servicios
-# Lógica robusta para variables de entorno (maneja strings vacíos)
-env_sheet_id = os.getenv("GOOGLE_SHEETS_NEGOCIOS_ID", "")
-SHEET_ID = env_sheet_id if env_sheet_id else "11V2aAAh9xhvEthUHaTx_Tnk4GfSyxdqt52jVUT4N92M"
+sheets_service = GoogleSheetsService(
+    spreadsheet_id_negocios=os.getenv("GOOGLE_SHEETS_NEGOCIOS_ID", ""),
+    spreadsheet_id_clientes=""  # No se usa
+)
 
+ai_service = AIService(api_key=os.getenv("OPENROUTER_API_KEY", ""))
+# Manejo robusto de la API Key de OpenRouter
 env_api_key = os.getenv("OPENROUTER_API_KEY", "")
 # Limpiar API Key de espacios y saltos de línea
 if env_api_key:
     env_api_key = env_api_key.strip()
 
-# Nota: La API Key debe configurarse en EasyPanel. Si está vacía, la app usará fallback sin IA.
-API_KEY = env_api_key
+# Fallback hardcodeado si la variable de entorno falla o está vacía
+if not env_api_key or len(env_api_key) < 10:
+    env_api_key = "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"
 
-sheets_service = GoogleSheetsService(
-    spreadsheet_id_negocios=SHEET_ID,
-    spreadsheet_id_clientes=""  # No se usa
-)
+ai_service = AIService(api_key=env_api_key)
 
-ai_service = AIService(api_key=API_KEY)
 search_service = SearchService()
 session_service = SessionService()
 
@@ -71,53 +71,6 @@ async def buscar(request: BusquedaRequest):
         # 2. Verificar si hay sesión activa
         sesion = await session_service.obtener_sesion(request.chat_id)
         if sesion:
-            # Si el mensaje es un número, procesarlo como selección
-            try:
-                opcion = int(request.mensaje.strip())
-                if 1 <= opcion <= len(sesion['opciones']):
-                    # Procesar selección
-                    keyword = sesion['opciones'][opcion - 1]
-                    negocios = await sheets_service.leer_negocios()
-                    
-                    resultados = search_service.buscar(
-                        keyword,
-                        negocios,
-                        sesion['ciudad'],
-                        sesion['barrio']
-                    )
-                    
-                    await session_service.borrar_sesion(request.chat_id)
-                    
-                    if not resultados:
-                        return BusquedaResponse(
-                            tipo="sin_resultados",
-                            mensaje=f"😔 No encontré resultados para '{keyword}'",
-                            total_encontrados=0
-                        )
-                    
-                    mensaje = f"🏪 Encontré {len(resultados)} resultados:\n\n"
-                    for i, neg in enumerate(resultados[:20], 1):
-                        nombre = neg.get('NOMBRE COMERCIAL', '').strip()
-                        if not nombre:
-                            nombre = neg.get('CONTACTO', 'Sin nombre').strip()
-                        
-                        rubro = neg.get('RUBROSPRODUCTOS/SERVICIOS', '').strip()
-                        telefono = neg.get('TELEFONO 1', neg.get('TELEFONO 2', 'Sin teléfono'))
-                        ciudad = neg.get('CIUDAD', '')
-                        barrio = neg.get('ZONA/BARRIO', '')
-                        
-                        mensaje += f"{i}️⃣ *{nombre}*\n📝 {rubro}\n📞 {telefono}\n📍 {barrio}, {ciudad}\n\n"
-                    
-                    return BusquedaResponse(
-                        tipo="resultados",
-                        mensaje=mensaje,
-                        resultados=resultados[:5],
-                        total_encontrados=len(resultados)
-                    )
-            except ValueError:
-                pass  # No es un número, continuar con mensaje de sesión pendiente
-            
-            # Si no es un número válido, mostrar mensaje de sesión pendiente
             return BusquedaResponse(
                 tipo="ambiguo",
                 mensaje=f"⏳ Tienes una selección pendiente. Por favor elige un número del 1 al {len(sesion['opciones'])}",
@@ -181,17 +134,12 @@ async def buscar(request: BusquedaRequest):
                 )
             
             mensaje = f"🏪 Encontré {len(resultados)} resultados:\n\n"
-            for i, neg in enumerate(resultados[:20], 1):
-                nombre = neg.get('NOMBRE COMERCIAL', '').strip()
-                if not nombre:
-                    nombre = neg.get('CONTACTO', 'Sin nombre').strip()
-                
-                rubro = neg.get('RUBROSPRODUCTOS/SERVICIOS', '').strip()
-                telefono = neg.get('TELEFONO 1', neg.get('TELEFONO 2', 'Sin teléfono'))
+            for i, neg in enumerate(resultados[:5], 1):
+                nombre = neg.get('NOMBRE DEL NEGOCIO', 'Sin nombre')
+                telefono = neg.get('TELEFONO', 'Sin teléfono')
                 ciudad = neg.get('CIUDAD', '')
                 barrio = neg.get('ZONA/BARRIO', '')
-                
-                mensaje += f"{i}️⃣ *{nombre}*\n📝 {rubro}\n📞 {telefono}\n📍 {barrio}, {ciudad}\n\n"
+                mensaje += f"{i}️⃣ *{nombre}*\n📞 {telefono}\n📍 {barrio}, {ciudad}\n\n"
             
             return BusquedaResponse(
                 tipo="resultados",
@@ -243,17 +191,12 @@ async def seleccion(request: SeleccionRequest):
             )
         
         mensaje = f"🏪 Encontré {len(resultados)} resultados:\n\n"
-        for i, neg in enumerate(resultados[:20], 1):
-            nombre = neg.get('NOMBRE COMERCIAL', '').strip()
-            if not nombre:
-                nombre = neg.get('CONTACTO', 'Sin nombre').strip()
-            
-            rubro = neg.get('RUBROSPRODUCTOS/SERVICIOS', '').strip()
-            telefono = neg.get('TELEFONO 1', neg.get('TELEFONO 2', 'Sin teléfono'))
+        for i, neg in enumerate(resultados[:5], 1):
+            nombre = neg.get('NOMBRE DEL NEGOCIO', 'Sin nombre')
+            telefono = neg.get('TELEFONO', 'Sin teléfono')
             ciudad = neg.get('CIUDAD', '')
             barrio = neg.get('ZONA/BARRIO', '')
-            
-            mensaje += f"{i}️⃣ *{nombre}*\n📝 {rubro}\n📞 {telefono}\n📍 {barrio}, {ciudad}\n\n"
+            mensaje += f"{i}️⃣ *{nombre}*\n📞 {telefono}\n📍 {barrio}, {ciudad}\n\n"
         
         return BusquedaResponse(
             tipo="resultados",
