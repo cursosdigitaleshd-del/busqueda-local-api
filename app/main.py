@@ -91,13 +91,18 @@ async def buscar(request: BusquedaRequest):
                             total_encontrados=0
                         )
                     
-                    mensaje = f"🏪 Encontré {len(resultados)} resultados:\n\n"
-                    for i, neg in enumerate(resultados[:5], 1):
-                        nombre = neg.get('NOMBRE COMERCIAL', 'Sin nombre')
-                        telefono = neg.get('TELEFONO 1', neg.get('TELEFONO 2', 'Sin teléfono'))
-                        ciudad = neg.get('CIUDAD', '')
-                        barrio = neg.get('ZONA/BARRIO', '')
-                        mensaje += f"{i}️⃣ *{nombre}*\n📞 {telefono}\n📍 {barrio}, {ciudad}\n\n"
+        mensaje = f"🏪 Encontré {len(resultados)} resultados:\n\n"
+        for i, neg in enumerate(resultados[:20], 1):
+            nombre = neg.get('NOMBRE COMERCIAL', '').strip()
+            if not nombre:
+                nombre = neg.get('CONTACTO', 'Sin nombre').strip()
+            
+            rubro = neg.get('RUBROSPRODUCTOS/SERVICIOS', '').strip()
+            telefono = neg.get('TELEFONO 1', neg.get('TELEFONO 2', 'Sin teléfono'))
+            ciudad = neg.get('CIUDAD', '')
+            barrio = neg.get('ZONA/BARRIO', '')
+            
+            mensaje += f"{i}️⃣ *{nombre}*\n📝 {rubro}\n📞 {telefono}\n📍 {barrio}, {ciudad}\n\n"
                     
                     return BusquedaResponse(
                         tipo="resultados",
@@ -172,12 +177,17 @@ async def buscar(request: BusquedaRequest):
                 )
             
             mensaje = f"🏪 Encontré {len(resultados)} resultados:\n\n"
-            for i, neg in enumerate(resultados[:5], 1):
-                nombre = neg.get('NOMBRE COMERCIAL', 'Sin nombre')
+            for i, neg in enumerate(resultados[:20], 1):
+                nombre = neg.get('NOMBRE COMERCIAL', '').strip()
+                if not nombre:
+                    nombre = neg.get('CONTACTO', 'Sin nombre').strip()
+                
+                rubro = neg.get('RUBROSPRODUCTOS/SERVICIOS', '').strip()
                 telefono = neg.get('TELEFONO 1', neg.get('TELEFONO 2', 'Sin teléfono'))
                 ciudad = neg.get('CIUDAD', '')
                 barrio = neg.get('ZONA/BARRIO', '')
-                mensaje += f"{i}️⃣ *{nombre}*\n📞 {telefono}\n📍 {barrio}, {ciudad}\n\n"
+                
+                mensaje += f"{i}️⃣ *{nombre}*\n📝 {rubro}\n📞 {telefono}\n📍 {barrio}, {ciudad}\n\n"
             
             return BusquedaResponse(
                 tipo="resultados",
@@ -229,12 +239,17 @@ async def seleccion(request: SeleccionRequest):
             )
         
         mensaje = f"🏪 Encontré {len(resultados)} resultados:\n\n"
-        for i, neg in enumerate(resultados[:5], 1):
-            nombre = neg.get('NOMBRE COMERCIAL', 'Sin nombre')
+        for i, neg in enumerate(resultados[:20], 1):
+            nombre = neg.get('NOMBRE COMERCIAL', '').strip()
+            if not nombre:
+                nombre = neg.get('CONTACTO', 'Sin nombre').strip()
+            
+            rubro = neg.get('RUBROSPRODUCTOS/SERVICIOS', '').strip()
             telefono = neg.get('TELEFONO 1', neg.get('TELEFONO 2', 'Sin teléfono'))
             ciudad = neg.get('CIUDAD', '')
             barrio = neg.get('ZONA/BARRIO', '')
-            mensaje += f"{i}️⃣ *{nombre}*\n📞 {telefono}\n📍 {barrio}, {ciudad}\n\n"
+            
+            mensaje += f"{i}️⃣ *{nombre}*\n📝 {rubro}\n📞 {telefono}\n📍 {barrio}, {ciudad}\n\n"
         
         return BusquedaResponse(
             tipo="resultados",
