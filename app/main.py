@@ -19,8 +19,7 @@ app.add_middleware(
 
 # Inicializar servicios
 sheets_service = GoogleSheetsService(
-    spreadsheet_id_negocios=os.getenv("GOOGLE_SHEETS_NEGOCIOS_ID", ""),
-    spreadsheet_id_clientes=""  # No se usa
+    spreadsheet_id_negocios=os.getenv("GOOGLE_SHEETS_NEGOCIOS_ID", "")
 )
 
 # Leer API Key desde variable de entorno
