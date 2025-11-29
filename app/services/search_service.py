@@ -21,8 +21,12 @@ class SearchService:
     def buscar(self, keyword: str, negocios: List[Dict], ciudad: str = "", barrio: str = "", plan: str = "Plan 1") -> List[Dict]:
         """Búsqueda principal con fuzzy matching"""
         keyword_norm = self._normalizar_texto(keyword)
+        print(f"🔍 Buscando: '{keyword}' (normalizado: '{keyword_norm}')")
+        print(f"📊 Total negocios: {len(negocios)}")
+        print(f"📍 Ubicación: {ciudad}/{barrio}, Plan: {plan}")
         
         resultados = []
+        debug_count = 0
         for negocio in negocios:
             # Filtrar por plan
             if plan == "Plan 1":
@@ -34,6 +38,13 @@ class SearchService:
             
             # Fuzzy matching
             score = fuzz.partial_ratio(keyword_norm, rubros)
+            
+            # Debug: mostrar primeros 3 negocios
+            if debug_count < 3:
+                print(f"  Negocio: {negocio.get('NOMBRE DEL NEGOCIO', 'Sin nombre')[:30]}")
+                print(f"    Rubros: {rubros[:50]}")
+                print(f"    Score: {score}")
+                debug_count += 1
             
             # Bonus por ubicación
             if ciudad:
@@ -55,6 +66,10 @@ class SearchService:
         
         # Ordenar por score
         resultados.sort(key=lambda x: x['score'], reverse=True)
+        
+        print(f"✅ Encontrados {len(resultados)} resultados")
+        if len(resultados) > 0:
+            print(f"   Top score: {resultados[0]['score']}")
         
         return [r['negocio'] for r in resultados[:10]]
 
