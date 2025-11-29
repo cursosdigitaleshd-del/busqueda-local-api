@@ -23,7 +23,7 @@ sheets_service = GoogleSheetsService(
     spreadsheet_id_clientes=""  # No se usa
 )
 
-a# Leer API Key desde variable de entorno
+# Leer API Key desde variable de entorno
 env_api_key = os.getenv("OPENROUTER_API_KEY", "")
 
 # Limpiar espacios
