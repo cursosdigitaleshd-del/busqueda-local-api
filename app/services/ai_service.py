@@ -1,3 +1,18 @@
+import httpx
+import json
+from typing import Dict, List, Optional
+
+class AIService:
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+        self.api_url = "https://api.openai.com/v1/chat/completions"
+        self.model = "gpt-4o-mini"
+
+    async def interpretar_mensaje(self, mensaje: str, ciudad: str, barrio: str) -> Dict:
+        """Interpreta el mensaje del usuario usando IA"""
+        try:
+            prompt = self._construir_prompt(mensaje, ciudad, barrio)
+            
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.post(
                     self.api_url,
