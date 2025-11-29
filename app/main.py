@@ -123,8 +123,8 @@ async def buscar(request: BusquedaRequest):
             
             mensaje = f"🏪 Encontré {len(resultados)} resultados:\n\n"
             for i, neg in enumerate(resultados[:5], 1):
-                nombre = neg.get('NOMBRE DEL NEGOCIO', 'Sin nombre')
-                telefono = neg.get('TELEFONO', 'Sin teléfono')
+                nombre = neg.get('NOMBRE COMERCIAL', 'Sin nombre')
+                telefono = neg.get('TELEFONO 1', neg.get('TELEFONO 2', 'Sin teléfono')
                 ciudad = neg.get('CIUDAD', '')
                 barrio = neg.get('ZONA/BARRIO', '')
                 mensaje += f"{i}️⃣ *{nombre}*\n📞 {telefono}\n📍 {barrio}, {ciudad}\n\n"
@@ -180,8 +180,8 @@ async def seleccion(request: SeleccionRequest):
         
         mensaje = f"🏪 Encontré {len(resultados)} resultados:\n\n"
         for i, neg in enumerate(resultados[:5], 1):
-            nombre = neg.get('NOMBRE DEL NEGOCIO', 'Sin nombre')
-            telefono = neg.get('TELEFONO', 'Sin teléfono')
+            nombre = neg.get('NOMBRE COMERCIAL', 'Sin nombre')
+            telefono = neg.get('TELEFONO 1', neg.get('TELEFONO 2', 'Sin teléfono')
             ciudad = neg.get('CIUDAD', '')
             barrio = neg.get('ZONA/BARRIO', '')
             mensaje += f"{i}️⃣ *{nombre}*\n📞 {telefono}\n📍 {barrio}, {ciudad}\n\n"

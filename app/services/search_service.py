@@ -41,7 +41,7 @@ class SearchService:
             
             # Debug: mostrar primeros 3 negocios
             if debug_count < 3:
-                print(f"  Negocio: {negocio.get('NOMBRE DEL NEGOCIO', 'Sin nombre')[:30]}")
+                print(f"  Negocio: {negocio.get('NOMBRE COMERCIAL', 'Sin nombre')[:30]}")
                 print(f"    Rubros: {rubros[:50]}")
                 print(f"    Score: {score}")
                 debug_count += 1
