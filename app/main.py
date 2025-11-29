@@ -59,6 +59,48 @@ async def buscar(request: BusquedaRequest):
         # 2. Verificar si hay sesión activa
         sesion = await session_service.obtener_sesion(request.chat_id)
         if sesion:
+            # Si el mensaje es un número, procesarlo como selección
+            try:
+                opcion = int(request.mensaje.strip())
+                if 1 <= opcion <= len(sesion['opciones']):
+                    # Procesar selección
+                    keyword = sesion['opciones'][opcion - 1]
+                    negocios = await sheets_service.leer_negocios()
+                    
+                    resultados = search_service.buscar(
+                        keyword,
+                        negocios,
+                        sesion['ciudad'],
+                        sesion['barrio']
+                    )
+                    
+                    await session_service.borrar_sesion(request.chat_id)
+                    
+                    if not resultados:
+                        return BusquedaResponse(
+                            tipo="sin_resultados",
+                            mensaje=f"😔 No encontré resultados para '{keyword}'",
+                            total_encontrados=0
+                        )
+                    
+                    mensaje = f"🏪 Encontré {len(resultados)} resultados:\n\n"
+                    for i, neg in enumerate(resultados[:5], 1):
+                        nombre = neg.get('NOMBRE COMERCIAL', 'Sin nombre')
+                        telefono = neg.get('TELEFONO 1', neg.get('TELEFONO 2', 'Sin teléfono'))
+                        ciudad = neg.get('CIUDAD', '')
+                        barrio = neg.get('ZONA/BARRIO', '')
+                        mensaje += f"{i}️⃣ *{nombre}*\n📞 {telefono}\n📍 {barrio}, {ciudad}\n\n"
+                    
+                    return BusquedaResponse(
+                        tipo="resultados",
+                        mensaje=mensaje,
+                        resultados=resultados[:5],
+                        total_encontrados=len(resultados)
+                    )
+            except ValueError:
+                pass  # No es un número, continuar con mensaje de sesión pendiente
+            
+            # Si no es un número válido, mostrar mensaje de sesión pendiente
             return BusquedaResponse(
                 tipo="ambiguo",
                 mensaje=f"⏳ Tienes una selección pendiente. Por favor elige un número del 1 al {len(sesion['opciones'])}",
