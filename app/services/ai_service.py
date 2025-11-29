@@ -6,7 +6,7 @@ class AIService:
     def __init__(self, api_key: str):
         self.api_key = api_key
         self.api_url = "https://openrouter.ai/api/v1/chat/completions"
-        self.model = "google/gemini-2.0-flash-lite-preview-02-05:free"
+        self.model = "meta-llama/llama-3.1-8b-instruct:free"
 
     async def interpretar_mensaje(self, mensaje: str, ciudad: str, barrio: str) -> Dict:
         """Interpreta el mensaje del usuario usando IA"""
