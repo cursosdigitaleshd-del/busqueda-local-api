@@ -1,7 +1,7 @@
 services:
   api:
     build: .
-    container_name: busqueda-api-v2
+    container_name: julio-olmedo-busqueda-api
     restart: unless-stopped
     ports:
       - "8001:8000"
@@ -24,7 +24,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: busqueda-redis-v2
+    container_name: julio-olmedo-busqueda-redis
     restart: unless-stopped
     ports:
       - "6380:6379"
