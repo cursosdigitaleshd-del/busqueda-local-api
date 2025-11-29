@@ -18,8 +18,11 @@ app.add_middleware(
 )
 
 # Inicializar servicios
+# ID hardcodeado como fallback si falla la variable de entorno
+SHEET_ID = os.getenv("GOOGLE_SHEETS_NEGOCIOS_ID", "11V2aAAh9xhvEthUHaTx_Tnk4GfSyxdqt52jVUT4N92M")
+
 sheets_service = GoogleSheetsService(
-    spreadsheet_id_negocios=os.getenv("GOOGLE_SHEETS_NEGOCIOS_ID", ""),
+    spreadsheet_id_negocios=SHEET_ID,
     spreadsheet_id_clientes=""  # No se usa
 )
 
