@@ -17,22 +17,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Inicializar servicios
-sheets_service = GoogleSheetsService(
-    spreadsheet_id_negocios=os.getenv("GOOGLE_SHEETS_NEGOCIOS_ID", ""),
-    spreadsheet_id_clientes=""  # No se usa
-)
-
-# Leer API Key desde variable de entorno
-env_api_key = os.getenv("OPENROUTER_API_KEY", "")
-
-# Limpiar espacios
-env_api_key = env_api_key.strip() if env_api_key else ""
-
-# Si no existe la API key → dejarla en blanco (seguro)
-if not env_api_key:
-    env_api_key = ""  # <-- esto es totalmente válido
-
 # Inicializar servicio IA solo una vez
 ai_service = AIService(api_key=env_api_key)
 
