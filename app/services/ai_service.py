@@ -14,12 +14,13 @@ class AIService:
             prompt = self._construir_prompt(mensaje, ciudad, barrio)
             
             async with httpx.AsyncClient(timeout=30.0) as client:
+                headers = {
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json"
+                }
                 response = await client.post(
                     self.api_url,
-                    headers={
-                        "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json"
-                    },
+                    headers=headers,
                     json={
                         "model": self.model,
                         "messages": [
